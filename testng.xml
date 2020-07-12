@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
+<suite name="Test_All_Classes" verbose="1" >
+    <test name="Full_Regression_Suite"   >
+        <packages>
+            <package name="org.example.te" />
+        </packages>
+    </test>
+</suite>
