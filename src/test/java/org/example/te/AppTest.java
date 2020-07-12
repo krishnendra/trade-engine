@@ -4,6 +4,7 @@ import org.example.te.dao.OrderBookDAO;
 import org.example.te.model.OrderId;
 import org.example.te.model.Order;
 import org.example.te.model.OrderBuilder;
+import org.example.te.model.OrderStatus;
 import org.testng.Assert;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -62,6 +63,7 @@ public class AppTest {
             t = e;
         }
         Assert.assertNotNull(t);
+        Assert.assertTrue(orderV1.getOrderStatus().equals(OrderStatus.REJECT));
         Assert.assertTrue(orderBookDAO.containsOrderKey(orderId));
         Assert.assertEquals(orderBookDAO.getOrderSize(orderId),1);
         Assert.assertEquals(orderBookDAO.getLatestVersion(orderId).getVersion().intValue(),2);
@@ -151,6 +153,7 @@ public class AppTest {
         try {
             orderBookDAO.saveNewOrder(order);
             Assert.assertFalse(orderBookDAO.containsOrderKey(orderId));
+            Assert.assertTrue(order.getOrderStatus().equals(OrderStatus.REJECT));
         }catch(Exception e){
             Assert.assertNull(e);
         }
