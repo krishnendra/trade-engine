@@ -1,6 +1,7 @@
 package org.example.te.model;
 
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -8,9 +9,9 @@ public class OrderSet {
 
     private Lock orderLock = new ReentrantLock();
 
-    private TreeSet<Order> orderSet;
+    private AtomicReference<TreeSet<Order>> orderSet;
 
-    public OrderSet(TreeSet<Order> orderSet) {
+    public OrderSet(AtomicReference<TreeSet<Order>> orderSet) {
         this.orderSet = orderSet;
     }
 
@@ -18,7 +19,7 @@ public class OrderSet {
         return orderLock;
     }
 
-    public TreeSet<Order> getOrderSet() {
+    public AtomicReference<TreeSet<Order>> getOrderSet() {
         return orderSet;
     }
 }

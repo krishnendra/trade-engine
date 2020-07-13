@@ -18,6 +18,7 @@ import java.util.TreeSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class OrderBookDAO{
@@ -62,11 +63,11 @@ public class OrderBookDAO{
     }
 
     public int getOrderSize(OrderId orderId){
-        return orderMap.get(orderId).getOrderSet().size();
+        return orderMap.get(orderId).getOrderSet().get().size();
     }
 
     public Order getLatestVersion(OrderId orderId){
-        return orderMap.get(orderId).getOrderSet().last();
+        return orderMap.get(orderId).getOrderSet().get().last();
     }
 
     public void saveNewOrder(Order order,AbstractOrderBookValidationRule rule) throws Exception{
@@ -76,7 +77,7 @@ public class OrderBookDAO{
                 if(validateOrder(order,rule)){
                     TreeSet<Order> orders = new TreeSet<>();
                     orders.add(order);
-                    orderMap.put(order.getOrderId(),new OrderSet(orders));
+                    orderMap.put(order.getOrderId(),new OrderSet(new AtomicReference<>(orders)));
                 }else{
                     LOGGER.info("Not able to add order as its status is {}, Reason is {}",order.getOrderStatus(),order.getRejectReason());
                 }
@@ -103,10 +104,10 @@ public class OrderBookDAO{
             orderMap.get(order.getOrderId()).getOrderLock().lock();
             if(validateOrder(order,rule)){
                 if(order.getOrderStatus().equals(OrderStatus.REPLACE)){
-                    orderMap.get(order.getOrderId()).getOrderSet().pollLast();
-                    orderMap.get(order.getOrderId()).getOrderSet().add(order);
+                    orderMap.get(order.getOrderId()).getOrderSet().get().pollLast();
+                    orderMap.get(order.getOrderId()).getOrderSet().get().add(order);
                 }else{
-                    orderMap.get(order.getOrderId()).getOrderSet().add(order);
+                    orderMap.get(order.getOrderId()).getOrderSet().get().add(order);
                 }
                 LOGGER.info("Order with Order Id:{} saved in the store", order.getOrderId());
             }
@@ -126,7 +127,7 @@ public class OrderBookDAO{
         try{
             storeLock.lock();
             orderMap.values().stream().forEach((orderSet)->{
-                orderSet.getOrderSet().stream().filter((o)->o.getMaturityDate().isBefore(LocalDate.now())).forEach((o)->o.setExpire(true));
+                orderSet.getOrderSet().get().stream().filter((o)->o.getMaturityDate().isBefore(LocalDate.now())).forEach((o)->o.setExpire(true));
             });
         }catch(Exception exp){
             LOGGER.info("Exception in expired order :{}", exp);
@@ -141,7 +142,7 @@ public class OrderBookDAO{
         try{
             if(orderMap.containsKey(newOrder.getOrderId())){
                 orderMap.get(newOrder.getOrderId()).getOrderLock().lock();
-                oldOrderLatestVersion = orderMap.get(newOrder.getOrderId()).getOrderSet().last();
+                oldOrderLatestVersion = orderMap.get(newOrder.getOrderId()).getOrderSet().get().last();
             }
             if(parentRule != null){
                 return parentRule.validate(oldOrderLatestVersion, newOrder);
